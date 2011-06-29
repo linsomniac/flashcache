@@ -39,6 +39,7 @@
 #include <linux/version.h>
 #include <linux/sort.h>
 #include <linux/time.h>
+#include "math64.h"
 #include <asm/kmap_types.h>
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,26)
@@ -406,7 +407,7 @@ new_kcached_job(struct cache_c *dmc, struct bio* bio, int index)
 		job->disk.count = dmc->block_size;
 	} else {
 		job->disk.sector = bio->bi_sector;
-		job->disk.count = to_sector(bio->bi_size);
+		job->disk.count = to_sector64(bio->bi_size);
 	}
 	job->next = NULL;
 	job->md_block = NULL;
@@ -429,7 +430,7 @@ flashcache_record_latency(struct cache_c *dmc, struct timeval *start_tv)
 	latency.tv_sec -= start_tv->tv_sec;
 	latency.tv_usec -= start_tv->tv_usec;	
 	us = latency.tv_sec * USEC_PER_SEC + latency.tv_usec;
-	us /= IO_LATENCY_GRAN_USECS;	/* histogram 250us gran, scale 10ms total */
+	us = div64_s64(us, IO_LATENCY_GRAN_USECS);	/* histogram 250us gran, scale 10ms total */
 	if (us < IO_LATENCY_BUCKETS)
 		/* < 10ms latency, track it */
 		dmc->latency_hist[us]++;
@@ -762,7 +763,7 @@ flashcache_update_sync_progress(struct cache_c *dmc)
 		return;
 	if (!dmc->nr_dirty || !dmc->size || !printk_ratelimit())
 		return;
-	dirty_pct = ((u_int64_t)dmc->nr_dirty * 100) / dmc->size;
+	dirty_pct =  div64_u64(((u_int64_t)dmc->nr_dirty * 100), dmc->size);
 	printk(KERN_INFO "Flashcache: Cleaning %d Dirty blocks, Dirty Blocks pct %llu%%", 
 	       dmc->nr_dirty, dirty_pct);
 	printk(KERN_INFO "\r");

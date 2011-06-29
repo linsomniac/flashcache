@@ -99,7 +99,7 @@ main(int argc, char **argv)
 	char *pname;
 	char *disk_devname, *ssd_devname, *cachedev;
 	struct flash_superblock *sb = (struct flash_superblock *)buf;
-	sector_t disk_devsize, cache_devsize;
+	unsigned long disk_devsize, cache_devsize;
 	int ret;
 
 	pname = argv[0];
@@ -162,12 +162,12 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	if (cache_devsize != sb->cache_devsize) {
-		fprintf(stderr, "%s: Cache size mismatch, expect %lu, given %lu\n", 
+		fprintf(stderr, "%s: Cache size mismatch, expect %llu, given %lu\n", 
 			pname, sb->cache_devsize, cache_devsize);
 		exit(1);		
 	}
 	if (disk_devsize != sb->disk_devsize) {
-		fprintf(stderr, "%s: Disk size mismatch, expect %lu, given %lu\n", 
+		fprintf(stderr, "%s: Disk size mismatch, expect %llu, given %lu\n", 
 			pname, sb->disk_devsize, disk_devsize);
 		exit(1);		
 	}

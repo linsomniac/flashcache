@@ -167,7 +167,8 @@ main(int argc, char **argv)
 	int cache_fd, disk_fd, c;
 	char *disk_devname, *ssd_devname, *cachedev;
 	struct flash_superblock *sb = (struct flash_superblock *)buf;
-	sector_t cache_devsize, disk_devsize;
+sector_t cache_devsize, disk_devsize;
+
 	sector_t block_size = 0, md_block_size = 0, cache_size = 0;
 	int cache_sectorsize;
 	int associativity = 512;
@@ -215,7 +216,7 @@ main(int argc, char **argv)
 	disk_devname = argv[optind];
 	printf("cachedev %s, ssd_devname %s, disk_devname %s\n", 
 	       cachedev, ssd_devname, disk_devname);
-	printf("block_size %lu, md_block_size %lu, cache_size %lu\n", block_size, md_block_size, cache_size);
+	printf("block_size %llu, md_block_size %llu, cache_size %llu\n", block_size, md_block_size, cache_size);
 	cache_fd = open(ssd_devname, O_RDONLY);
 	if (cache_fd < 0) {
 		fprintf(stderr, "Failed to open %s\n", ssd_devname);
@@ -260,12 +261,12 @@ main(int argc, char **argv)
 	}
 	if (md_block_size > 0 &&
 	    md_block_size * 512 < cache_sectorsize) {
-		fprintf(stderr, "%s: SSD device (%s) sector size (%d) cannot be larger than metadata block size (%d) !\n",
+		fprintf(stderr, "%s: SSD device (%s) sector size (%d) cannot be larger than metadata block size (%llu) !\n",
 		        pname, ssd_devname, cache_sectorsize, md_block_size * 512);
 		exit(1);				
 	}
 	if (cache_size && cache_size > cache_devsize) {
-		fprintf(stderr, "%s: Cache size is larger than ssd size %lu/%lu\n", 
+		fprintf(stderr, "%s: Cache size is larger than ssd size %llu/%llu\n", 
 			pname, cache_size, cache_devsize);
 		exit(1);		
 	}
@@ -282,9 +283,9 @@ main(int argc, char **argv)
 			exit(1);
 		}
 	}
-	sprintf(dmsetup_cmd, "echo 0 %lu flashcache %s %s 2 %lu %lu %lu %lu"
+	sprintf(dmsetup_cmd, "echo 0 %lu flashcache %s %s 2 %llu %llu %u %llu"
 		" | dmsetup create %s",
-		disk_devsize, disk_devname, ssd_devname, block_size, 
+		(unsigned long) disk_devsize, disk_devname, ssd_devname, block_size, 
 		cache_size, associativity, md_block_size, 
 		cachedev);
 

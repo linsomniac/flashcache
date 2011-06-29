@@ -31,6 +31,17 @@
 
 #ifdef __KERNEL__
 
+static inline sector_t to_sector64(sector_t n)
+{
+	return (n >> SECTOR_SHIFT);
+}
+
+static inline sector_t to_bytes64(sector_t n)
+{
+	return (n << SECTOR_SHIFT);
+}
+
+
 /* Like ASSERT() but always compiled in */
 
 #define VERIFY(x) do { \
@@ -381,6 +392,7 @@ struct flash_cacheblock {
 #define MD_SECTORS_PER_BLOCK(DMC)	((DMC)->md_block_size)
 #define MD_SLOTS_PER_BLOCK(DMC)		(MD_BLOCK_BYTES(DMC) / (sizeof(struct flash_cacheblock)))
 #define INDEX_TO_MD_BLOCK(DMC, INDEX)	((INDEX) / MD_SLOTS_PER_BLOCK(DMC))
+#define INDEX_TO_MD_BLOCK64(DMC, INDEX)	(div64_u64((INDEX), MD_SLOTS_PER_BLOCK(DMC)))
 #define INDEX_TO_MD_BLOCK_OFFSET(DMC, INDEX)	((INDEX) % MD_SLOTS_PER_BLOCK(DMC))
 
 #define METADATA_IO_BLOCKSIZE		(256*1024)
