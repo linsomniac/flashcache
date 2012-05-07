@@ -826,6 +826,7 @@ flashcache_md_store(struct cache_c *dmc)
 	int write_errors = 0;
 	int sectors_written = 0, sectors_expected = 0; /* debug */
 	int slots_written = 0; /* How many cache slots did we fill in this MD io block ? */
+	sector_t dmc_size;
 
 	meta_data_cacheblock = (struct flash_cacheblock *)vmalloc(METADATA_IO_BLOCKSIZE);
 	if (!meta_data_cacheblock) {
@@ -905,7 +906,8 @@ flashcache_md_store(struct cache_c *dmc)
 
 
 	sectors_expected = (div64_u64(dmc->size, MD_SLOTS_PER_BLOCK(dmc))) * MD_SECTORS_PER_BLOCK(dmc);
-	if (do_div(dmc->size, MD_SLOTS_PER_BLOCK(dmc)))
+	dmc_size = dmc->size;
+	if (do_div(dmc_size, MD_SLOTS_PER_BLOCK(dmc)))
 		sectors_expected += MD_SECTORS_PER_BLOCK(dmc);
 	if (sectors_expected != sectors_written) {
 		printk("flashcache_md_store" "Sector Mismatch ! sectors_expected=%d, sectors_written=%d\n",
@@ -993,6 +995,8 @@ flashcache_md_create(struct cache_c *dmc, int force)
 	sector_t order;
 	int sectors_written = 0, sectors_expected = 0; /* debug */
 	int slots_written = 0; /* How many cache slots did we fill in this MD io block ? */
+	int tmp_slots_written;
+	sector_t dmc_size;
 	
 	header = (struct flash_superblock *)vmalloc(MD_BLOCK_BYTES(dmc));
 	if (!header) {
@@ -1120,7 +1124,8 @@ flashcache_md_create(struct cache_c *dmc, int force)
 		/* Write the remaining last blocks out */
 		VERIFY(slots_written > 0);
 		where.count = (div64_u64(slots_written, MD_SLOTS_PER_BLOCK(dmc))) * MD_SECTORS_PER_BLOCK(dmc);
-		if (do_div(slots_written, MD_SLOTS_PER_BLOCK(dmc)))
+		tmp_slots_written = slots_written;
+		if (do_div(tmp_slots_written, MD_SLOTS_PER_BLOCK(dmc)))
 			where.count += MD_SECTORS_PER_BLOCK(dmc);
 		sectors_written += where.count;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,27)
@@ -1139,7 +1144,8 @@ flashcache_md_create(struct cache_c *dmc, int force)
 	}
 	/* Debug Tests */
 	sectors_expected = (div64_u64(dmc->size, MD_SLOTS_PER_BLOCK(dmc))) * MD_SECTORS_PER_BLOCK(dmc);
-	if (do_div(dmc->size, MD_SLOTS_PER_BLOCK(dmc)))
+	dmc_size = dmc->size;
+	if (do_div(dmc_size, MD_SLOTS_PER_BLOCK(dmc)))
 		sectors_expected += MD_SECTORS_PER_BLOCK(dmc);
 	if (sectors_expected != sectors_written) {
 		printk("flashcache_md_create" "Sector Mismatch ! sectors_expected=%d, sectors_written=%d\n",
